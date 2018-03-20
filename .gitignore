@@ -30,3 +30,5 @@
 *.exe
 *.out
 *.app
+.vscode/settings.json
+filozof_v2
