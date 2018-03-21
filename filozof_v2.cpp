@@ -11,13 +11,12 @@ mutex mtx;
 const int numThreads = 5;
 bool forkEnable[numThreads];
 int status[numThreads];
-
+int HP[numThreads];
 void pickUp(int tID){
 	mtx.lock();
 	forkEnable[tID]=false;
 	forkEnable[((2*numThreads+tID-1)%numThreads)]=false;
 	mtx.unlock();
-	
 }
 void putDown(int tID){
 	mtx.lock();
@@ -27,48 +26,45 @@ void putDown(int tID){
 }
 void showStatus(){
 		mtx.lock();
-		int wynik = 0;
 	for (int i=0;i<numThreads;i++)
 	{
-		cout<<status[i]<< " ";
-		//wynik+=status[i];
+		mvprintw(1,i*5,"%d",status[i]);
+		mvprintw(2,i*5+3,"%d",forkEnable[i]);
+		mvprintw(i+4,0,"HP filozofa %d = %d",i,HP[i]);
+		
+		if(HP[i]<0)
+		{
+			mvprintw(i+10,5,"filozof %d padl",i);
+		}
+		refresh();
 	}
-	//cout<<wynik<<endl;
-	cout<<endl;
 	mtx.unlock();
 }
 void startThread(int tID) {
-	while(1)
+	while(HP[tID]>0)
 	{
-		if(forkEnable[tID] && forkEnable[((2*numThreads+tID-1)%numThreads)])
-		{
-
 		
-			pickUp(tID);
-			//pickUp(((2*numThreads+tID-1)%numThreads));
-			//mvprintw(2,tID*2,"E");
+		if(forkEnable[tID] && forkEnable[(((2*numThreads)+tID-1)%numThreads)])
+		{
+			
+			//mvprintw(tID+10,0,"%d",tID);
 			//refresh();
+		
+			pickUp(tID);			
 			status[tID]=1;
-			int eatTime = rand() %1000;
+			int eatTime = rand() %500+500;
+			HP[tID]=999;
 			eatTime*=1000;
 			usleep(eatTime);
 
-			//mtx.lock();
 			putDown(tID);
-			//putDown(((2*numThreads+tID-1)%numThreads));
-		//	mvprintw(2,tID*2,"P");
-			//refresh();
 			status[tID]=0;
-			int philosopheTime = rand() %1000;
+			int philosopheTime = rand() %500+450;
+			HP[tID]-=philosopheTime;
 			philosopheTime*1000;
 			usleep(philosopheTime);
-			//mtx.unlock();
-
-			
-			
-			
 					
-			showStatus();
+		showStatus();	
 		}
 		
 	}	
@@ -82,11 +78,12 @@ int main(){
 	{
 		forkEnable[i]=true;
 		status[i]=0;
+		HP[i]=999;
 	}
 	int tab[numThreads];
 	
 	thread t[numThreads];
-	//initscr();
+	initscr();
 	for (int i = 0; i < numThreads; i++)
 	{
 		t[i] = thread(startThread, i);
@@ -98,7 +95,7 @@ int main(){
 		//cout<<wynik<<endl;
 		t[i].join();
 	}
-//	endwin();
+	endwin();
 
 	return 0;
 }
