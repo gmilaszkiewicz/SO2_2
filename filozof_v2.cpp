@@ -10,36 +10,70 @@ mutex mtx;
 
 const int numThreads = 5;
 bool forkEnable[numThreads];
+int status[numThreads];
 
-void startThread(int tID) {
-while(1)
-{
-	if(forkEnable[tID] && forkEnable[((2*numThreads+tID-1)%numThreads)])
-	{
+void pickUp(int tID){
+	mtx.lock();
+	forkEnable[tID]=false;
+	forkEnable[((2*numThreads+tID-1)%numThreads)]=false;
+	mtx.unlock();
+	
+}
+void putDown(int tID){
+	mtx.lock();
+	forkEnable[tID]=true;
+	forkEnable[((2*numThreads+tID-1)%numThreads)]=true;
+	mtx.unlock();
+}
+void showStatus(){
 		mtx.lock();
-		forkEnable[tID]=false;
-		forkEnable[((2*numThreads+tID-1)%numThreads)]=false;
-		//cout<<"Filozof " << tID <<" je" <<endl;
-		mvprintw(2,tID*2,"E");
-		refresh();
-		int eatTime = rand() %1000;
-		eatTime*=1000;
-		usleep(eatTime);
-		forkEnable[tID]=true;
-		forkEnable[((2*numThreads+tID-1)%numThreads)]=true;
-
-		int philosopheTime = rand() %1000;
-		//cout<<"Filozof " << tID <<" filozofuje" <<endl;
-		mvprintw(2,tID*2,"P");
-		refresh();
-		mtx.unlock();
-		philosopheTime*1000;
-		usleep(philosopheTime);
+		int wynik = 0;
+	for (int i=0;i<numThreads;i++)
+	{
+		cout<<status[i]<< " ";
+		//wynik+=status[i];
 	}
-	
+	//cout<<wynik<<endl;
+	cout<<endl;
+	mtx.unlock();
 }
-	
+void startThread(int tID) {
+	while(1)
+	{
+		if(forkEnable[tID] && forkEnable[((2*numThreads+tID-1)%numThreads)])
+		{
+
+		
+			pickUp(tID);
+			//pickUp(((2*numThreads+tID-1)%numThreads));
+			//mvprintw(2,tID*2,"E");
+			//refresh();
+			status[tID]=1;
+			int eatTime = rand() %1000;
+			eatTime*=1000;
+			usleep(eatTime);
+
+			//mtx.lock();
+			putDown(tID);
+			//putDown(((2*numThreads+tID-1)%numThreads));
+		//	mvprintw(2,tID*2,"P");
+			//refresh();
+			status[tID]=0;
+			int philosopheTime = rand() %1000;
+			philosopheTime*1000;
+			usleep(philosopheTime);
+			//mtx.unlock();
+
+			
+			
+			
+					
+			showStatus();
+		}
+		
+	}	
 }
+
 
 //wzór na prawy widelec ((2N + i -2)%N)+1
 int main(){
@@ -47,11 +81,12 @@ int main(){
 	for(int i=0;i<numThreads;i++)
 	{
 		forkEnable[i]=true;
+		status[i]=0;
 	}
 	int tab[numThreads];
 	
 	thread t[numThreads];
-	initscr();
+	//initscr();
 	for (int i = 0; i < numThreads; i++)
 	{
 		t[i] = thread(startThread, i);
@@ -63,7 +98,7 @@ int main(){
 		//cout<<wynik<<endl;
 		t[i].join();
 	}
-	endwin();
+//	endwin();
 
 	return 0;
 }
