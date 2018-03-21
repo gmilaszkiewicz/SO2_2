@@ -8,21 +8,21 @@
 using namespace std;
 mutex mtx;
 
-const int numThreads = 5;
+const int numThreads = 4;
 bool forkEnable[numThreads];
 int status[numThreads];
 int HP[numThreads];
 void pickUp(int tID){
-	mtx.lock();
+	//mtx.lock();
 	forkEnable[tID]=false;
 	forkEnable[((2*numThreads+tID-1)%numThreads)]=false;
-	mtx.unlock();
+	//mtx.unlock();
 }
 void putDown(int tID){
-	mtx.lock();
+//	mtx.lock();
 	forkEnable[tID]=true;
 	forkEnable[((2*numThreads+tID-1)%numThreads)]=true;
-	mtx.unlock();
+//	mtx.unlock();
 }
 void showStatus(){
 		mtx.lock();
@@ -41,32 +41,38 @@ void showStatus(){
 	mtx.unlock();
 }
 void startThread(int tID) {
-	while(HP[tID]>0)
+	while(1)//HP[tID]>0)
 	{
-		
+		mtx.lock();
 		if(forkEnable[tID] && forkEnable[(((2*numThreads)+tID-1)%numThreads)])
 		{
-			
-			//mvprintw(tID+10,0,"%d",tID);
-			//refresh();
-		
-			pickUp(tID);			
+			pickUp(tID);
 			status[tID]=1;
-			int eatTime = rand() %500+500;
-			HP[tID]=999;
-			eatTime*=1000;
-			usleep(eatTime);
+			// mvprintw(1,tID*5,"%d",status[tID]);
+			// mvprintw(2,tID*5+3,"%d",forkEnable[tID]);
+			// refresh();
+			
+		}
+		mtx.unlock();
+		showStatus();
+		usleep(rand() %500000+500000);
 
+		mtx.lock();
+		if(status[tID]==1)
+		{
 			putDown(tID);
 			status[tID]=0;
-			int philosopheTime = rand() %500+450;
-			HP[tID]-=philosopheTime;
-			philosopheTime*1000;
-			usleep(philosopheTime);
-					
-		showStatus();	
+			// mvprintw(1,tID*5,"%d",status[tID]);
+			// mvprintw(2,tID*5+3,"%d",forkEnable[tID]);
+			// refresh();
+			
 		}
-		
+		mtx.unlock();
+		showStatus();
+		// mvprintw(1,tID*5,"%d",status[tID]);
+		// mvprintw(2,tID*5+3,"%d",forkEnable[tID]);
+		// refresh();
+		usleep(rand() %500000+500000);
 	}	
 }
 
